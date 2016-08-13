@@ -79,7 +79,7 @@
 -- results in
 --
 -- > f "funny" == "$my funny ${string}|]
-module NeatInterpolation (text) where
+module NeatInterpolation (text, textNL) where
 
 import BasePrelude
 
@@ -96,8 +96,14 @@ import qualified Data.Text as T
 -- |
 -- The quasiquoter.
 text :: QuasiQuoter
-text = QuasiQuoter {quoteExp = quoteExprExp}
+text = QuasiQuoter {quoteExp = quoteExprExp False}
 
+-- |
+-- A variant of the quasiquoter, insensitive to source line end style (Unix or
+-- Windows). That is, newlines in your file are parsed as \n, irrespective of
+-- how the source file was saved or checked out.
+textNL :: QuasiQuoter
+textNL = QuasiQuoter {quoteExp = quoteExprExp True}
 -- |
 -- A function used internally by the quasiquoter. Just ignore it.
 indentQQPlaceholder :: Int -> Text -> Text
@@ -107,9 +113,9 @@ indentQQPlaceholder indent text = case T.lines text of
   [] -> text
 
 
-quoteExprExp :: String -> Q Exp
-quoteExprExp input =
-  case parseLines $ normalizeQQInput input of
+quoteExprExp :: Bool -> String -> Q Exp
+quoteExprExp normalizeNL input =
+  case parseLines $ normalizeQQInput normalizeNL input of
     Left e -> fail $ show e
     Right lines -> sigE (appE [|T.unlines|] $ listE $ map lineExp lines)
                         [t|Text|]

@@ -3,9 +3,15 @@ module NeatInterpolation.String where
 import BasePrelude
 
 
-normalizeQQInput :: [Char] -> [Char]
-normalizeQQInput = trim . unindent' . tabsToSpaces
+normalizeQQInput :: Bool -> [Char] -> [Char]
+normalizeQQInput normalizeNL =
+  if normalizeNL then
+    filter (/= '\r') . body
+  else
+    body
   where
+    body :: [Char] -> [Char]
+    body = trim . unindent' . tabsToSpaces
     unindent' :: [Char] -> [Char]
     unindent' s =
       case lines s of
